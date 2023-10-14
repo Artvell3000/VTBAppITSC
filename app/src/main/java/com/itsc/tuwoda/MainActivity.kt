@@ -65,6 +65,7 @@ class MainActivity : ComponentActivity() {
     private lateinit var context: Context
     private lateinit var locationManager: LocationManager
     private lateinit var pLauncher: ActivityResultLauncher<String>
+    private var currentBank:Int? = null
 
     //region Permission func
     private fun registerPermissionListener(){
@@ -103,6 +104,7 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    @RequiresApi(Build.VERSION_CODES.Q)
     @OptIn(ExperimentalMaterialApi::class, ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -139,10 +141,11 @@ class MainActivity : ComponentActivity() {
                     mapViewModel?.setMyLocation(
                         p0.position
                     )
+                    mapViewModel?.initRoads(p0.position)
                 }
 
                 override fun onLocationStatusUpdated(p0: LocationStatus) {
-                    Toast.makeText(context,"123", Toast.LENGTH_LONG).show()
+                    //Toast.makeText(context,"123", Toast.LENGTH_LONG).show()
                 }
 
             }
@@ -176,6 +179,19 @@ class MainActivity : ComponentActivity() {
                     }
                 )
 
+                mapViewModel?.initBankPlacemarks(
+                    id = listOf(1,2,3,4,5),
+                    l = listOf(
+                        Pair(56.454424, 84.935289),
+                        Pair(56.537350, 84.953260),
+                        Pair(56.503949, 85.021851),
+                        Pair(56.474359, 85.002254),
+                        Pair(56.481329, 84.967838)
+                    ),
+                ){ id->
+                    currentBank = id
+                }
+
                 Scaffold(
                     content = {
                         WindowInsetsControllerCompat(window, window.decorView).apply {
@@ -199,9 +215,9 @@ class MainActivity : ComponentActivity() {
                                     modifier = Modifier
                                         .offset(y = (-35).dp),
                                     onState = {
-                                        val intent =
-                                            packageManager.getLaunchIntentForPackage("ru.yandex.taxi")
-                                        startActivity(intent)
+                                        doItAndCheckPermissions {
+                                            mapViewModel?.goToMyLocation()
+                                        }
                                     }
                                 )
                             }
@@ -210,6 +226,7 @@ class MainActivity : ComponentActivity() {
                 )
             }
         }
+        registerPermissionListener()
     }
     override fun onStop() {
         mapViewModel?.mapView?.onStop()
